@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './style/Live.css';
-
+APP_URL='https://algostats.onrender.com'
 function Live({ config, problems: initialProblems, userSession, onEndContest }) {
     // const [timeLeft, setTimeLeft] = useState(config.duration * 3600);
     const [problems, setProblems] = useState(initialProblems);
@@ -57,7 +57,7 @@ function Live({ config, problems: initialProblems, userSession, onEndContest }) 
     const handleCheckProgress = async () => {
         setVerifying(true);
         try {
-            const response = await axios.post('http://127.0.0.1:5000/api/contest/verify', {
+            const response = await axios.post(`${APP_URL}/api/contest/verify`, {
                 contest_id: config.contestId,
                 email: userSession.email
             });

@@ -3,7 +3,7 @@ import axios from 'axios';
 import Live from './Live';
 import './style/Contest.css';
 import './style/Live.css';
-
+APP_URL='https://algostats.onrender.com'
 function Contest({ userSession }) {
     // History & Live State
     const [pastContests, setPastContests] = useState([]);
@@ -29,7 +29,7 @@ function Contest({ userSession }) {
     const fetchContestHistory = async () => {
         if (!userSession?.email) return;
         try {
-            const response = await axios.get(`http://127.0.0.1:5000/api/contest/history?email=${userSession.email}&t=${Date.now()}`);
+            const response = await axios.get(`${APP_URL}/api/contest/history?email=${userSession.email}&t=${Date.now()}`);
             setPastContests(response.data);
         } catch (err) { console.error("Failed to retrieve contest history", err); }
     };
@@ -59,7 +59,7 @@ function Contest({ userSession }) {
         e.preventDefault();
         setIsDrafting(true);
         try {
-            const response = await axios.post('http://127.0.0.1:5000/api/contest/draft', {
+            const response = await axios.post(`${APP_URL}/api/contest/draft`, {
                 email: userSession.email,
                 style: formStyle,
                 num_problems: formProblems,
@@ -81,7 +81,7 @@ function Contest({ userSession }) {
         const currentIds = draftData.problems.map(p => p.id);
 
         try {
-            const response = await axios.post('http://127.0.0.1:5000/api/contest/swap', {
+            const response = await axios.post(`${APP_URL}/api/contest/swap`, {
                 email: userSession.email,
                 style: draftData.style,
                 difficulty: targetProblem.difficulty,
@@ -106,7 +106,7 @@ function Contest({ userSession }) {
             // NEW: Send the custom title to the backend!
             const fallbackTitle = `${formStyle === 'leetcode' ? 'LeetCode' : 'Codeforces'} Arena`;
             
-            const response = await axios.post('http://127.0.0.1:5000/api/contest/confirm', {
+            const response = await axios.post(`${APP_URL}/api/contest/confirm`, {
                 email: userSession.email,
                 title: formTitle.trim() || fallbackTitle, 
                 style: draftData.style,
@@ -136,7 +136,7 @@ function Contest({ userSession }) {
     const handleTerminateActiveContest = async () => {
         if (!activeContest) return;
         try {
-            await axios.post('http://127.0.0.1:5000/api/contest/end', {
+            await axios.post(`${APP_URL}/api/contest/end`, {
                 contest_id: activeContest.contestId,
                 email: userSession.email
             });
@@ -153,7 +153,7 @@ function Contest({ userSession }) {
     // ----------------------------------------------------
     const handleViewContestDetails = async (contest) => {
         try {
-            const response = await axios.get(`http://127.0.0.1:5000/api/contest/${contest.id}/problems`);
+            const response = await axios.get(`${APP_URL}/api/contest/${contest.id}/problems`);
             setViewingProblems(response.data);
             setViewingContest(contest);
         } catch (err) {
@@ -163,7 +163,7 @@ function Contest({ userSession }) {
     
     const handleResumeContest = async (contest) => {
         try {
-            const response = await axios.get(`http://127.0.0.1:5000/api/contest/${contest.id}/problems`);
+            const response = await axios.get(`${APP_URL}/api/contest/${contest.id}/problems`);
             const config = {
                 contestId: contest.id,
                 style: contest.style,

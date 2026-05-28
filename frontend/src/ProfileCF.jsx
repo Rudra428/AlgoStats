@@ -5,6 +5,7 @@ import {
     CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 } from 'recharts';
 import './style/ProfileCF.css'
+APP_URL='https://algostats.onrender.com'
 function ProfileCF({ handle }) {
     const [profile, setProfile] = useState(null);
     const [ratingData, setRatingData] = useState([]);
@@ -21,12 +22,12 @@ function ProfileCF({ handle }) {
         const loadCFDetails = async () => {
             try {
                 // 1. Fetch Basic Profile Info
-                const infoRes = await axios.get(`http://127.0.0.1:5000/api/user/cf/${handle}`);
+                const infoRes = await axios.get(`${APP_URL}/api/user/cf/${handle}`);
                 setProfile(infoRes.data);
 
                 // 2. Fetch Rating History for the Line Chart
                 try {
-                    const ratingRes = await axios.get(`http://127.0.0.1:5000/api/user/cf-rating/${handle}`);
+                    const ratingRes = await axios.get(`${APP_URL}/api/user/cf-rating/${handle}`);
                     const formattedRatings = ratingRes.data.map(contest => {
                         const date = new Date(contest.ratingUpdateTimeSeconds * 1000);
                         return {
@@ -40,7 +41,7 @@ function ProfileCF({ handle }) {
 
                 // 3. Fetch Submissions for the Difficulty Bar Chart
                 try {
-                    const statusRes = await axios.get(`http://127.0.0.1:5000/api/user/cf-status/${handle}`);
+                    const statusRes = await axios.get(`${APP_URL}/api/user/cf-status/${handle}`);
                     
                     // Use a Map to only count unique problems (ignoring multiple attempts)
                     const uniqueProblems = new Map();

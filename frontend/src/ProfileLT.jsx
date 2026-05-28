@@ -5,7 +5,7 @@ import {
     CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 } from 'recharts';
 import './style/ProfileLT.css'; // Ensure this matches your CSS filename!
-
+APP_URL='https://algostats.onrender.com'
 function ProfileLT({ handle }) {
     const [profile, setProfile] = useState(null);
     const [ratingData, setRatingData] = useState([]);
@@ -21,7 +21,7 @@ function ProfileLT({ handle }) {
         
         const loadLTDetails = async () => {
             try {
-                const response = await axios.get(`http://127.0.0.1:5000/api/user/lt/${handle}`);
+                const response = await axios.get(`${APP_URL}/api/user/lt/${handle}`);
                 const data = response.data;
                 setProfile(data);
 
