@@ -1,4 +1,6 @@
-import sqlite3
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import random
 import requests
 from flask import Flask, jsonify, request
@@ -9,48 +11,54 @@ from zoneinfo import ZoneInfo
 app = Flask(__name__)
 CORS(app)  # Enables seamless frontend cross-origin requests
 
-DB_FILE = "database.db"
+# Connects to Render's DB in production, or a local fallback
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://localhost/algostats')
+
+def get_db_connection():
+    return psycopg2.connect(DATABASE_URL)
 
 # ==========================================
 # 1. DATABASE INITIALIZATION
 # ==========================================
 
 def init_db():
-    with sqlite3.connect(DB_FILE) as conn:
-        cursor = conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY, cf_handle TEXT, lt_handle TEXT)''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS custom_contests (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, style TEXT, num_problems INTEGER, duration_hours INTEGER, start_time DATETIME DEFAULT CURRENT_TIMESTAMP, status TEXT DEFAULT 'active')''')
-        
-        # Contest Problems Table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS contest_problems (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                contest_id INTEGER,
-                problem_id TEXT,
-                name TEXT,
-                platform TEXT,
-                difficulty TEXT, 
-                url TEXT,
-                is_solved BOOLEAN DEFAULT 0,
-                FOREIGN KEY(contest_id) REFERENCES custom_contests(id)
-            )
-        ''')
+    # Only run if a DATABASE_URL is explicitly set (like on Render) or if running local Postgres
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute('''CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY, cf_handle TEXT, lt_handle TEXT)''')
+                
+                # PostgreSQL uses SERIAL instead of AUTOINCREMENT
+                cursor.execute('''CREATE TABLE IF NOT EXISTS custom_contests (id SERIAL PRIMARY KEY, email TEXT, style TEXT, num_problems INTEGER, duration_hours INTEGER, start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, status TEXT DEFAULT 'active')''')
+                
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS contest_problems (
+                        id SERIAL PRIMARY KEY,
+                        contest_id INTEGER,
+                        problem_id TEXT,
+                        name TEXT,
+                        platform TEXT,
+                        difficulty TEXT, 
+                        url TEXT,
+                        is_solved BOOLEAN DEFAULT FALSE,
+                        FOREIGN KEY(contest_id) REFERENCES custom_contests(id)
+                    )
+                ''')
 
-        # SAFELY ADD NEW SCORING COLUMNS (Will ignore if they already exist)
-        try:
-            cursor.execute("ALTER TABLE custom_contests ADD COLUMN total_score INTEGER DEFAULT 0")
-            cursor.execute("ALTER TABLE custom_contests ADD COLUMN expected_rating INTEGER DEFAULT 0")
-            cursor.execute("ALTER TABLE contest_problems ADD COLUMN earned_points INTEGER DEFAULT 0")
-        except sqlite3.OperationalError:
-            pass
-            
-        # SAFELY ADD TITLE COLUMN
-        try:
-            cursor.execute("ALTER TABLE custom_contests ADD COLUMN title TEXT")
-        except sqlite3.OperationalError:
-            pass
-            
-        conn.commit()
+                # Helper to add columns safely in Postgres
+                def add_col(table, col, definition):
+                    cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name=%s AND column_name=%s", (table, col))
+                    if not cursor.fetchone():
+                        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {definition}")
+
+                add_col("custom_contests", "total_score", "INTEGER DEFAULT 0")
+                add_col("custom_contests", "expected_rating", "INTEGER DEFAULT 0")
+                add_col("custom_contests", "title", "TEXT")
+                add_col("contest_problems", "earned_points", "INTEGER DEFAULT 0")
+                
+            conn.commit()
+    except Exception as e:
+        print(f"Warning: Database initialization failed. Check connection string: {e}")
 
 # Self-initialize on app spin-up
 init_db()
@@ -251,10 +259,10 @@ def get_handles():
     if not email:
         return jsonify({"error": "Email context required"}), 400
         
-    with sqlite3.connect(DB_FILE) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = ?", (email,))
-        row = cursor.fetchone()
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = %s", (email,))
+            row = cursor.fetchone()
         
     if row:
         return jsonify({"cf": row[0], "lt": row[1]}), 200
@@ -272,15 +280,15 @@ def save_handle():
         
     column_target = f"{platform}_handle"
     
-    with sqlite3.connect(DB_FILE) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1 FROM users WHERE email = ?", (email,))
-        user_exists = cursor.fetchone()
-        
-        if user_exists:
-            cursor.execute(f"UPDATE users SET {column_target} = ? WHERE email = ?", (handle, email))
-        else:
-            cursor.execute(f"INSERT INTO users (email, {column_target}) VALUES (?, ?)", (email, handle))
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM users WHERE email = %s", (email,))
+            user_exists = cursor.fetchone()
+            
+            if user_exists:
+                cursor.execute(f"UPDATE users SET {column_target} = %s WHERE email = %s", (handle, email))
+            else:
+                cursor.execute(f"INSERT INTO users (email, {column_target}) VALUES (%s, %s)", (email, handle))
         conn.commit()
         
     return jsonify({"success": True, "message": f"{platform.upper()} handle updated successfully."}), 200
@@ -410,11 +418,10 @@ def draft_contest():
     n = int(data.get('num_problems', 3))
     duration = int(data.get('duration_hours', 2))
 
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = ?", (email,))
-    user_row = cursor.fetchone()
-    conn.close()
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = %s", (email,))
+            user_row = cursor.fetchone()
     
     cf_handle = user_row[0] if user_row else None
     lt_handle = user_row[1] if user_row else None
@@ -451,11 +458,10 @@ def swap_problem():
     difficulty = data.get('difficulty') 
     exclude_ids = data.get('exclude_ids', [])
 
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = ?", (email,))
-    user_row = cursor.fetchone()
-    conn.close()
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = %s", (email,))
+            user_row = cursor.fetchone()
 
     cf_handle = user_row[0] if user_row else None
     lt_handle = user_row[1] if user_row else None
@@ -475,7 +481,7 @@ def swap_problem():
 
 @app.route('/api/contest/confirm', methods=['POST'])
 def confirm_contest():
-    """Step 3: Takes the finalized list, commits to SQLite, and starts the timer."""
+    """Step 3: Takes the finalized list, commits to PostgreSQL, and starts the timer."""
     data = request.json
     email = data.get('email')
     title = data.get('title')
@@ -484,26 +490,23 @@ def confirm_contest():
     problems = data.get('problems')
     n = len(problems)
 
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
-
-    # Generate exact IST time
     ist_time = datetime.now(ZoneInfo("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M:%S')
 
-    cursor.execute('''
-        INSERT INTO custom_contests (email, title, style, num_problems, duration_hours, status, start_time)
-        VALUES (?, ?, ?, ?, ?, 'active', ?)
-    ''', (email, title, style, n, duration, ist_time))
-    contest_id = cursor.lastrowid
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            # PostgreSQL uses RETURNING id to get the generated id
+            cursor.execute('''
+                INSERT INTO custom_contests (email, title, style, num_problems, duration_hours, status, start_time)
+                VALUES (%s, %s, %s, %s, %s, 'active', %s) RETURNING id
+            ''', (email, title, style, n, duration, ist_time))
+            contest_id = cursor.fetchone()[0]
 
-    for prob in problems:
-        cursor.execute('''
-            INSERT INTO contest_problems (contest_id, problem_id, name, platform, difficulty, url, is_solved)
-            VALUES (?, ?, ?, ?, ?, ?, 0)
-        ''', (contest_id, prob['id'], prob['name'], style, prob['difficulty'], prob['url']))
-
-    conn.commit()
-    conn.close()
+            for prob in problems:
+                cursor.execute('''
+                    INSERT INTO contest_problems (contest_id, problem_id, name, platform, difficulty, url, is_solved)
+                    VALUES (%s, %s, %s, %s, %s, %s, FALSE)
+                ''', (contest_id, prob['id'], prob['name'], style, prob['difficulty'], prob['url']))
+        conn.commit()
 
     return jsonify({"contest_id": contest_id, "start_time": ist_time}), 200
 
@@ -516,10 +519,10 @@ def create_contest():
     n = int(data.get('num_problems', 3))
     duration = int(data.get('duration_hours', 2))
 
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = ?", (email,))
-    user_row = cursor.fetchone()
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = %s", (email,))
+            user_row = cursor.fetchone()
     
     cf_handle = user_row[0] if user_row else None
     lt_handle = user_row[1] if user_row else None
@@ -552,20 +555,20 @@ def create_contest():
                 "url": "https://leetcode.com/problemset/" if style == 'leetcode' else "https://codeforces.com/problemset"
             })
 
-    cursor.execute('''
-        INSERT INTO custom_contests (email, style, num_problems, duration_hours, status)
-        VALUES (?, ?, ?, ?, 'active')
-    ''', (email, style, n, duration))
-    contest_id = cursor.lastrowid
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute('''
+                INSERT INTO custom_contests (email, style, num_problems, duration_hours, status)
+                VALUES (%s, %s, %s, %s, 'active') RETURNING id
+            ''', (email, style, n, duration))
+            contest_id = cursor.fetchone()[0]
 
-    for prob in problems_pool:
-        cursor.execute('''
-            INSERT INTO contest_problems (contest_id, problem_id, name, platform, difficulty, url, is_solved)
-            VALUES (?, ?, ?, ?, ?, ?, 0)
-        ''', (contest_id, prob['id'], prob['name'], style, prob['difficulty'], prob['url']))
-
-    conn.commit()
-    conn.close()
+            for prob in problems_pool:
+                cursor.execute('''
+                    INSERT INTO contest_problems (contest_id, problem_id, name, platform, difficulty, url, is_solved)
+                    VALUES (%s, %s, %s, %s, %s, %s, FALSE)
+                ''', (contest_id, prob['id'], prob['name'], style, prob['difficulty'], prob['url']))
+        conn.commit()
 
     return jsonify({
         "contest_id": contest_id,
@@ -586,64 +589,60 @@ def verify_contest_progress():
     contest_id = data.get('contest_id')
     email = data.get('email')
 
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    with get_db_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("SELECT * FROM contest_problems WHERE contest_id = %s", (contest_id,))
+            db_problems = cursor.fetchall()
 
-    cursor.execute("SELECT * FROM contest_problems WHERE contest_id = ?", (contest_id,))
-    db_problems = cursor.fetchall()
-
-    cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = ?", (email,))
-    user_row = cursor.fetchone()
-    
-    if not user_row:
-        conn.close()
-        return jsonify({"error": "User context unavailable"}), 400
-
-    platform_style = db_problems[0]['platform'] if db_problems else 'codeforces'
-    solved_identifiers = set()
-
-    if platform_style == 'codeforces' and user_row['cf_handle']:
-        try:
-            res = requests.get(f"https://codeforces.com/api/user.status?handle={user_row['cf_handle']}", timeout=5).json()
-            if res.get('status') == 'OK':
-                for sub in res['result']:
-                    if sub.get('verdict') == 'OK':
-                        p = sub['problem']
-                        solved_identifiers.add(f"{p.get('contestId')}-{p.get('index')}")
-        except Exception:
-            pass
+            cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = %s", (email,))
+            user_row = cursor.fetchone()
             
-    elif platform_style == 'leetcode' and user_row['lt_handle']:
-        try:
-            url = "https://leetcode.com/graphql"
-            headers = {'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json'}
-            query = """query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { titleSlug } }"""
-            res = requests.post(url, json={'query': query, 'variables': {"username": user_row['lt_handle'], "limit": 20}}, headers=headers, timeout=5).json()
-            if res.get('data') and res['data'].get('recentAcSubmissionList'):
-                for sub in res['data']['recentAcSubmissionList']:
-                    solved_identifiers.add(sub['titleSlug']) 
-        except Exception:
-            pass
+            if not user_row:
+                return jsonify({"error": "User context unavailable"}), 400
 
-    updated_problems = []
-    for row in db_problems:
-        p_id = row['problem_id']
-        is_now_solved = row['is_solved']
+            platform_style = db_problems[0]['platform'] if db_problems else 'codeforces'
+            solved_identifiers = set()
 
-        if p_id in solved_identifiers and not is_now_solved:
-            cursor.execute("UPDATE contest_problems SET is_solved = 1 WHERE id = ?", (row['id'],))
-            is_now_solved = 1
+            if platform_style == 'codeforces' and user_row['cf_handle']:
+                try:
+                    res = requests.get(f"https://codeforces.com/api/user.status?handle={user_row['cf_handle']}", timeout=5).json()
+                    if res.get('status') == 'OK':
+                        for sub in res['result']:
+                            if sub.get('verdict') == 'OK':
+                                p = sub['problem']
+                                solved_identifiers.add(f"{p.get('contestId')}-{p.get('index')}")
+                except Exception:
+                    pass
+                    
+            elif platform_style == 'leetcode' and user_row['lt_handle']:
+                try:
+                    url = "https://leetcode.com/graphql"
+                    headers = {'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json'}
+                    query = """query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { titleSlug } }"""
+                    res = requests.post(url, json={'query': query, 'variables': {"username": user_row['lt_handle'], "limit": 20}}, headers=headers, timeout=5).json()
+                    if res.get('data') and res['data'].get('recentAcSubmissionList'):
+                        for sub in res['data']['recentAcSubmissionList']:
+                            solved_identifiers.add(sub['titleSlug']) 
+                except Exception:
+                    pass
 
-        updated_problems.append({
-            "name": row['name'],
-            "difficulty": row['difficulty'],
-            "url": row['url'],
-            "isSolved": bool(is_now_solved)
-        })
+            updated_problems = []
+            for row in db_problems:
+                p_id = row['problem_id']
+                is_now_solved = row['is_solved']
 
-    conn.commit()
-    conn.close()
+                if p_id in solved_identifiers and not is_now_solved:
+                    cursor.execute("UPDATE contest_problems SET is_solved = TRUE WHERE id = %s", (row['id'],))
+                    is_now_solved = True
+
+                updated_problems.append({
+                    "name": row['name'],
+                    "difficulty": row['difficulty'],
+                    "url": row['url'],
+                    "isSolved": bool(is_now_solved)
+                })
+
+        conn.commit()
     return jsonify({"problems": updated_problems}), 200
 
 @app.route('/api/contest/end', methods=['POST'])
@@ -653,106 +652,110 @@ def end_custom_contest():
     contest_id = data.get('contest_id')
     email = data.get('email')
 
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-
     try:
-        cursor.execute("SELECT * FROM custom_contests WHERE id = ?", (contest_id,))
-        contest = cursor.fetchone()
-        if not contest:
-            return jsonify({"error": "Contest not found"}), 404
-        
-        try:
-            start_ts = datetime.strptime(contest['start_time'], '%Y-%m-%d %H:%M:%S').replace(tzinfo=ZoneInfo("Asia/Kolkata")).timestamp()
-        except Exception:
-            start_ts = datetime.now().timestamp()
-
-        cursor.execute("SELECT * FROM contest_problems WHERE contest_id = ?", (contest_id,))
-        db_problems = cursor.fetchall()
-        cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = ?", (email,))
-        user_row = cursor.fetchone()
-
-        total_max_points = 0
-        total_earned_points = 0
-        highest_solved_rating = 0
-        platform_style = db_problems[0]['platform'] if db_problems else 'codeforces'
-
-        cf_submissions = []
-        lt_solved_slugs = []
-
-        if platform_style == 'codeforces' and user_row and user_row['cf_handle']:
-            try:
-                res = requests.get(f"https://codeforces.com/api/user.status?handle={user_row['cf_handle']}&from=1&count=50", timeout=5).json()
-                cf_submissions = res.get('result', []) if res.get('status') == 'OK' else []
-            except Exception: pass
-
-        elif platform_style == 'leetcode' and user_row and user_row['lt_handle']:
-            try:
-                url = "https://leetcode.com/graphql"
-                headers = {'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json'}
-                query = """query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { titleSlug } }"""
-                res = requests.post(url, json={'query': query, 'variables': {"username": user_row['lt_handle'], "limit": 20}}, headers=headers, timeout=5).json()
-                lt_solved_slugs = [s['titleSlug'] for s in res['data']['recentAcSubmissionList']] if res.get('data') else []
-            except Exception: pass
-
-        rating_map = {'Easy': 800, 'Medium': 1400, 'Hard': 2000}
-
-        for row in db_problems:
-            max_pts = get_max_points(row['difficulty'], platform_style)
-            total_max_points += max_pts
-            
-            is_solved = row['is_solved']
-            earned = row['earned_points']
-            rating_val = int(row['difficulty']) if platform_style == 'codeforces' else rating_map.get(row['difficulty'], 800)
-
-            if platform_style == 'codeforces':
-                c_id, p_idx = row['problem_id'].split('-')
-                prob_subs = [s for s in cf_submissions if str(s['problem'].get('contestId')) == c_id and s['problem'].get('index') == p_idx and s['creationTimeSeconds'] >= start_ts]
-                prob_subs.sort(key=lambda x: x['creationTimeSeconds'])
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT * FROM custom_contests WHERE id = %s", (contest_id,))
+                contest = cursor.fetchone()
+                if not contest:
+                    return jsonify({"error": "Contest not found"}), 404
                 
-                wa_count = 0
-                for sub in prob_subs:
-                    if sub['verdict'] == 'OK':
-                        is_solved = 1
-                        mins_passed = (sub['creationTimeSeconds'] - start_ts) / 60.0
-                        degraded = max_pts * (1 - (mins_passed / 250.0))
-                        earned = max(degraded - (wa_count * 50), max_pts * 0.3)
-                        break
-                    elif sub['verdict'] != 'COMPILATION_ERROR':
-                        wa_count += 1
-            
-            elif platform_style == 'leetcode':
-                if row['problem_id'] in lt_solved_slugs:
-                    is_solved = 1
-            
-            # Guarantee points are assigned if solved
-            if is_solved and earned == 0:
-                earned = max_pts * 0.8
-            
-            if is_solved:
-                highest_solved_rating = max(highest_solved_rating, rating_val)
+                # PostgreSQL returns an actual datetime object for TIMESTAMP columns
+                try:
+                    if isinstance(contest['start_time'], datetime):
+                        start_ts = contest['start_time'].replace(tzinfo=ZoneInfo("Asia/Kolkata")).timestamp()
+                    else:
+                        start_ts = datetime.strptime(str(contest['start_time']), '%Y-%m-%d %H:%M:%S').replace(tzinfo=ZoneInfo("Asia/Kolkata")).timestamp()
+                except Exception:
+                    start_ts = datetime.now().timestamp()
 
-            total_earned_points += earned
-            cursor.execute("UPDATE contest_problems SET is_solved = ?, earned_points = ? WHERE id = ?", (is_solved, int(earned), row['id']))
+                cursor.execute("SELECT * FROM contest_problems WHERE contest_id = %s", (contest_id,))
+                db_problems = cursor.fetchall()
+                cursor.execute("SELECT cf_handle, lt_handle FROM users WHERE email = %s", (email,))
+                user_row = cursor.fetchone()
 
-        expected_rating = 0
-        if total_max_points > 0 and highest_solved_rating > 0:
-            yield_pct = total_earned_points / total_max_points
-            expected_rating = int(highest_solved_rating + ((yield_pct - 0.5) * 400))
+                total_max_points = 0
+                total_earned_points = 0
+                highest_solved_rating = 0
+                platform_style = db_problems[0]['platform'] if db_problems else 'codeforces'
 
-        cursor.execute("UPDATE custom_contests SET status = 'completed', total_score = ?, expected_rating = ? WHERE id = ?", (int(total_earned_points), expected_rating, contest_id))
-        conn.commit()
-        
+                cf_submissions = []
+                lt_solved_slugs = []
+
+                if platform_style == 'codeforces' and user_row and user_row['cf_handle']:
+                    try:
+                        res = requests.get(f"https://codeforces.com/api/user.status?handle={user_row['cf_handle']}&from=1&count=50", timeout=5).json()
+                        cf_submissions = res.get('result', []) if res.get('status') == 'OK' else []
+                    except Exception: pass
+
+                elif platform_style == 'leetcode' and user_row and user_row['lt_handle']:
+                    try:
+                        url = "https://leetcode.com/graphql"
+                        headers = {'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json'}
+                        query = """query recentAcSubmissions($username: String!, $limit: Int!) { recentAcSubmissionList(username: $username, limit: $limit) { titleSlug } }"""
+                        res = requests.post(url, json={'query': query, 'variables': {"username": user_row['lt_handle'], "limit": 20}}, headers=headers, timeout=5).json()
+                        lt_solved_slugs = [s['titleSlug'] for s in res['data']['recentAcSubmissionList']] if res.get('data') else []
+                    except Exception: pass
+
+                rating_map = {'Easy': 800, 'Medium': 1400, 'Hard': 2000}
+
+                for row in db_problems:
+                    max_pts = get_max_points(row['difficulty'], platform_style)
+                    total_max_points += max_pts
+                    
+                    is_solved = row['is_solved']
+                    earned = row['earned_points']
+                    rating_val = int(row['difficulty']) if platform_style == 'codeforces' else rating_map.get(row['difficulty'], 800)
+
+                    if platform_style == 'codeforces':
+                        c_id, p_idx = row['problem_id'].split('-')
+                        prob_subs = [s for s in cf_submissions if str(s['problem'].get('contestId')) == c_id and s['problem'].get('index') == p_idx and s['creationTimeSeconds'] >= start_ts]
+                        prob_subs.sort(key=lambda x: x['creationTimeSeconds'])
+                        
+                        wa_count = 0
+                        for sub in prob_subs:
+                            if sub['verdict'] == 'OK':
+                                is_solved = True
+                                mins_passed = (sub['creationTimeSeconds'] - start_ts) / 60.0
+                                degraded = max_pts * (1 - (mins_passed / 250.0))
+                                earned = max(degraded - (wa_count * 50), max_pts * 0.3)
+                                break
+                            elif sub['verdict'] != 'COMPILATION_ERROR':
+                                wa_count += 1
+                    
+                    elif platform_style == 'leetcode':
+                        if row['problem_id'] in lt_solved_slugs:
+                            is_solved = True
+                    
+                    # Guarantee points are assigned if solved
+                    if is_solved and earned == 0:
+                        earned = max_pts * 0.8
+                    
+                    if is_solved:
+                        highest_solved_rating = max(highest_solved_rating, rating_val)
+
+                    total_earned_points += earned
+                    # Pass is_solved as a boolean directly into psycopg2
+                    cursor.execute("UPDATE contest_problems SET is_solved = %s, earned_points = %s WHERE id = %s", (is_solved, int(earned), row['id']))
+
+                expected_rating = 0
+                if total_max_points > 0 and highest_solved_rating > 0:
+                    yield_pct = total_earned_points / total_max_points
+                    expected_rating = int(highest_solved_rating + ((yield_pct - 0.5) * 400))
+
+                cursor.execute("UPDATE custom_contests SET status = 'completed', total_score = %s, expected_rating = %s WHERE id = %s", (int(total_earned_points), expected_rating, contest_id))
+            
+            conn.commit()
+            
         return jsonify({"message": "Scored successfully"}), 200
 
     except Exception as e:
         # Fallback to force closure if error occurs
-        cursor.execute("UPDATE custom_contests SET status = 'completed' WHERE id = ?", (contest_id,))
-        conn.commit()
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("UPDATE custom_contests SET status = 'completed' WHERE id = %s", (contest_id,))
+            conn.commit()
         return jsonify({"error": f"Failed to score, but contest closed: {str(e)}"}), 500
-    finally:
-        conn.close()
 
 
 # ==========================================
@@ -763,51 +766,46 @@ def end_custom_contest():
 def get_contest_history():
     """Fetches user contest dashboard records."""
     email = request.args.get('email')
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    
+    with get_db_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute('''SELECT id, title, style, num_problems, start_time, duration_hours, status, total_score, expected_rating 
+                              FROM custom_contests WHERE email = %s ORDER BY start_time DESC''', (email,))
+            contests = cursor.fetchall()
+            history = []
 
-    cursor.execute('''SELECT id, title, style, num_problems, start_time, duration_hours, status, total_score, expected_rating 
-                      FROM custom_contests WHERE email = ? ORDER BY start_time DESC''', (email,))
-    contests = cursor.fetchall()
-    history = []
+            for c in contests:
+                # PostgreSQL requires boolean casting to sum them
+                cursor.execute('SELECT COUNT(*) as total, SUM(CASE WHEN is_solved THEN 1 ELSE 0 END) as solved FROM contest_problems WHERE contest_id = %s', (c['id'],))
+                stats = cursor.fetchone()
+                
+                history.append({
+                    "id": c['id'],
+                    "title": c['title'] if c['title'] else f"{str(c['style']).title()} Arena",
+                    "date": str(c['start_time']).split()[0] if c['start_time'] else "Unknown",
+                    "difficulty": f"{stats['total']} Problems",
+                    "score": c['total_score'],
+                    "expected_rating": c['expected_rating'],
+                    "solved": f"{stats['solved'] if stats['solved'] else 0} / {stats['total']}",
+                    "status": c['status'],
+                    "style": c['style'],
+                    "duration": c['duration_hours'],
+                    "start_time": c['start_time'] 
+                })
 
-    for c in contests:
-        cursor.execute('SELECT COUNT(*) as total, SUM(is_solved) as solved FROM contest_problems WHERE contest_id = ?', (c['id'],))
-        stats = cursor.fetchone()
-        
-        history.append({
-            "id": c['id'],
-            "title": c['title'] if c['title'] else f"{str(c['style']).title()} Arena",
-            "date": str(c['start_time']).split()[0] if c['start_time'] else "Unknown",
-            "difficulty": f"{stats['total']} Problems",
-            "score": c['total_score'],
-            "expected_rating": c['expected_rating'],
-            "solved": f"{stats['solved'] if stats['solved'] else 0} / {stats['total']}",
-            "status": c['status'],
-            "style": c['style'],
-            "duration": c['duration_hours'],
-            "start_time": c['start_time'] 
-        })
-
-    conn.close()
     return jsonify(history), 200
 
 @app.route('/api/contest/<int:contest_id>/problems', methods=['GET'])
 def get_contest_problems(contest_id):
     """Fetches the specific problem set for a given contest."""
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    
     try:
-        cursor.execute('SELECT * FROM contest_problems WHERE contest_id = ?', (contest_id,))
-        problems = [dict(row) for row in cursor.fetchall()]
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute('SELECT * FROM contest_problems WHERE contest_id = %s', (contest_id,))
+                problems = cursor.fetchall()
         return jsonify(problems), 200
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve problems: {str(e)}"}), 500
-    finally:
-        conn.close()
 
 
 if __name__ == '__main__':
