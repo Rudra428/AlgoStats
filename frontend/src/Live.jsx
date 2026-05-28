@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './style/Live.css';
-APP_URL='https://algostats.onrender.com'
+const APP_URL='https://algostats.onrender.com'
 function Live({ config, problems: initialProblems, userSession, onEndContest }) {
     // const [timeLeft, setTimeLeft] = useState(config.duration * 3600);
     const [problems, setProblems] = useState(initialProblems);

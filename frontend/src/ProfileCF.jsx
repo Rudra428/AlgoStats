@@ -5,7 +5,7 @@ import {
     CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 } from 'recharts';
 import './style/ProfileCF.css'
-APP_URL='https://algostats.onrender.com'
+const APP_URL='https://algostats.onrender.com'
 function ProfileCF({ handle }) {
     const [profile, setProfile] = useState(null);
     const [ratingData, setRatingData] = useState([]);

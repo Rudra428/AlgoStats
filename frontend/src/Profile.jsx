@@ -12,7 +12,7 @@ import Contest from './Contest';
 import 'react-calendar-heatmap/dist/styles.css';
 import 'react-tooltip/dist/react-tooltip.css';
 import './style/Profile.css';
-APP_URL='https://algostats.onrender.com'
+const APP_URL='https://algostats.onrender.com'
 
 // --- THE ALGOSTATS POWER SCORE ENGINE ---
 const calculateUnifiedScore = (cfProfile, ltProfile, ltStats, activeDaysCount, cfRatingCounts) => {

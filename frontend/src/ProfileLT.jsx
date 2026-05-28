@@ -5,7 +5,7 @@ import {
     CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 } from 'recharts';
 import './style/ProfileLT.css'; // Ensure this matches your CSS filename!
-APP_URL='https://algostats.onrender.com'
+const APP_URL='https://algostats.onrender.com'
 function ProfileLT({ handle }) {
     const [profile, setProfile] = useState(null);
     const [ratingData, setRatingData] = useState([]);

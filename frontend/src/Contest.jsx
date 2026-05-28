@@ -3,7 +3,7 @@ import axios from 'axios';
 import Live from './Live';
 import './style/Contest.css';
 import './style/Live.css';
-APP_URL='https://algostats.onrender.com'
+const APP_URL='https://algostats.onrender.com'
 function Contest({ userSession }) {
     // History & Live State
     const [pastContests, setPastContests] = useState([]);
