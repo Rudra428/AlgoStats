@@ -1,0 +1,273 @@
+/* ==========================================
+   CUSTOM CONTEST ARENA STYLES
+   ========================================== */
+
+.contest-arena-container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+}
+
+.contest-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.arena-title {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: var(--text-main);
+}
+
+.arena-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* Premium Create Button */
+.btn-create-contest {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-create-contest:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+}
+
+.plus-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Grid Layout */
+.section-heading {
+  margin: 0 0 20px 0;
+  color: var(--text-main);
+  font-size: 18px;
+}
+
+.contest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+/* Individual Contest Card */
+.contest-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contest-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: #cbd5e1;
+}
+
+.contest-card-header {
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.contest-card-header h4 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  color: var(--text-main);
+}
+
+.contest-date {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Stats inside the card */
+.contest-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.contest-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.rank-highlight .stat-value {
+  color: #10b981; /* Success Green */
+  font-size: 18px;
+}
+
+/* Action Button inside Card */
+.btn-view-results {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-view-results:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+
+/* ==========================================
+   PAST CONTEST DETAILS MODAL
+   ========================================== */
+.details-modal-content {
+  max-width: 550px; /* Slightly wider than the creation modal */
+}
+
+.details-subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: -16px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.past-problems-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px; /* Room for scrollbar */
+}
+
+.past-problem-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.past-prob-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.past-prob-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-main);
+}
+
+.past-prob-diff {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.past-prob-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-missed {
+  color: #ef4444; /* Red for missed */
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.text-sm {
+  font-size: 13px;
+  padding: 6px 12px;
+}
+/* ==========================================
+   REVIEW & SWAP STYLES
+   ========================================== */
+.review-modal-content {
+  max-width: 600px; /* Wider to accommodate problem names and buttons */
+}
+
+.btn-swap-problem {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-swap-problem:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.btn-swap-problem:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-start-live {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-start-live:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}

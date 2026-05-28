@@ -1,0 +1,172 @@
+/* ==========================================
+   ENHANCED SIDEBAR PROFILE PANEL
+   ========================================== */
+.sidebar-profile-panel {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 32px 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-profile-panel:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Avatar Layout Container */
+.avatar-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.sidebar-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ffffff;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+}
+
+/* Connection Active Status Ring */
+.rank-status-dot {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Identity Headers */
+.user-fullname {
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.3px;
+}
+
+.cf-handle-tag {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  background: transparent;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Lists and Metric Data rows */
+.stats-list-group {
+  width: 100%;
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-profile-panel .stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+
+.sidebar-profile-panel .stat-item:last-child {
+  border-bottom: none;
+}
+
+.sidebar-profile-panel .stat-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.sidebar-profile-panel .stat-value {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* Vibrant Platform Badging */
+.rank-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.rating-number-focus {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.peak-rating-value {
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+}
+/* ==========================================
+   SIDEBAR EXTERNAL NAVIGATION ACTION LINKS
+   ========================================== */
+.sidebar-action-links {
+  width: 100%;
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-link-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 16px;
+  background-color: var(--accent-blue);
+  color: #ffffff !important;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease-in-out;
+}
+
+.sidebar-link-btn:hover {
+  background-color: var(--accent-blue-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.secondary-link-btn {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main) !important;
+  box-shadow: none;
+}
+
+.secondary-link-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  box-shadow: none;
+}
+
+.link-arrow-icon {
+  font-size: 12px;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-link-btn:hover .link-arrow-icon {
+  transform: translate(2px, -2px);
+}

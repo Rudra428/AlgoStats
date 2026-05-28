@@ -1,0 +1,238 @@
+/* ==========================================
+   CONTEST CREATION MODAL
+   ========================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content h3 {
+  margin: 0 0 24px 0;
+  font-size: 20px;
+}
+
+.contest-form .form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.contest-form label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.contest-form select, .contest-form input[type="range"] {
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.btn-cancel, .btn-start {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: var(--text-muted);
+}
+
+.btn-start {
+  background: #2563eb;
+  color: white;
+}
+
+/* ==========================================
+   LIVE ARENA DASHBOARD
+   ========================================== */
+.live-arena-wrapper {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.live-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  background: #0f172a; /* Dark header for focus */
+  color: white;
+}
+
+.live-header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.live-header-info h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.live-badge-pulse {
+  background: #ef4444;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.live-timer {
+  font-size: 32px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-danger {
+  color: #ef4444;
+}
+
+.btn-end-contest {
+  background: transparent;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-end-contest:hover {
+  background: #1e293b;
+  color: white;
+}
+
+/* Problem List */
+.live-problems-container {
+  padding: 32px;
+}
+
+.live-problems-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.live-problems-header h3 {
+  margin: 0;
+}
+
+.btn-refresh-status {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.live-problem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.live-problem-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.prob-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.prob-number {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.prob-details h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+}
+
+.prob-difficulty {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.prob-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.status-pending {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.status-solved {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btn-solve-link {
+  background: var(--accent-blue);
+  color: white;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-solve-link:hover {
+  background: var(--accent-blue-hover);
+}

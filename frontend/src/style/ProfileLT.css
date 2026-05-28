@@ -1,0 +1,50 @@
+/* ==========================================
+   LEETCODE SPECIFIC PROFILE STYLES
+   ========================================== */
+
+/* LeetCode handle tag (matches CF tag style but LC colors) */
+.lt-handle-tag {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  background: transparent;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #ffa116; /* LeetCode Orange */
+}
+
+/* Ranking Badge */
+.lt-badge {
+  color: #b45309;
+  background-color: #fffbeb;
+  border: 1px solid #fef3c7;
+}
+
+/* LeetCode Primary Action Button */
+.lt-primary-btn {
+  background-color: #ffa116 !important;
+  color: #ffffff !important;
+}
+
+.lt-primary-btn:hover {
+  background-color: #e68a00 !important;
+}
+
+/* Ensure Tooltips match the rest of the app */
+.custom-chart-tooltip {
+  background: #ffffff;
+  padding: 10px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.custom-chart-tooltip .tooltip-label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.custom-chart-tooltip .tooltip-value {
+  margin: 0;
+  font-weight: 500;
+}
