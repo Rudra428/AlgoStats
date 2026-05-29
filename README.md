@@ -1,6 +1,6 @@
-# AlgoStats⚔️
+# AlgoStats ⚔️
 
-AlgoStats-Arena is a full-stack algorithmic intelligence engine designed to break down data silos between competitive programming and interview preparation platforms. By syncing real-time data from **Codeforces** and **LeetCode**, it synthesizes fragmented metrics into a single, comprehensive dashboard and provides an immersive environment for structured, adaptive training.
+AlgoStats is a full-stack algorithmic intelligence engine designed to break down data silos between competitive programming and interview preparation platforms. By syncing real-time data from **Codeforces** and **LeetCode**, it synthesizes fragmented metrics into a single, comprehensive dashboard and provides an immersive environment for structured, adaptive training.
 
 ## 🚀 Live Environment
 * **Frontend (Production):** [https://algo-stats-zeta.vercel.app](https://algo-stats-zeta.vercel.app)
@@ -8,15 +8,13 @@ AlgoStats-Arena is a full-stack algorithmic intelligence engine designed to brea
 
 ---
 
-
-
 ## 🎯 Problem & Solution
 
 ### The Problem 📉
 With thousands of algorithmic problems spread across fragmented platforms like Codeforces and LeetCode, developers face intense **decision fatigue**. It is incredibly difficult for a user to self-diagnose their exact skill gaps, leading them to either waste time solving trivial problems below their tier or get frustrated by hitting roadblocks on problems far beyond their current capabilities.
 
 ### Our Solution: The Arena Engine 🚀
-AlgoStats-Arena eliminates decision fatigue by operating as an automated algorithmic coach. 
+AlgoStats eliminates decision fatigue by operating as an automated algorithmic coach. 
 
 Instead of forcing users to choose, the platform utilizes a custom synthesis algorithm that reads live profile data, parses cross-platform historical performance, and maps out user capabilities. It then dynamically curates an optimized batch of unsolved problems and packages them into a time-bounded **Custom Contest**. This guarantees that every training session targets the exact sweet spot of the user's current engineering threshold, accelerating skill acquisition through structured, adaptive learning.
 
@@ -24,7 +22,7 @@ Instead of forcing users to choose, the platform utilizes a custom synthesis alg
 
 ## ✨ Core Features & Uniqueness
 
-Unlike standard profile aggregators, AlgoStats-Arena acts as an **engineering intelligence layer** that actively drives developer growth:
+Unlike standard profile aggregators, AlgoStats acts as an **engineering intelligence layer** that actively drives developer growth:
 
 * **The Unified "Power Score" Synthesis:** Calculates a weighted "Developer Fitness Score" by synthesizing Codeforces rating volatility, LeetCode problem volume (Easy/Medium/Hard split), and active consistency metrics.
 * **Cross-Platform Custom Arenas:** Analyzes your active profile ratings to dynamically curate targeted problem sets that bridge identified skill gaps across both ecosystems.
