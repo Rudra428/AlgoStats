@@ -199,7 +199,7 @@ function Contest({ userSession }) {
         <div className="contest-arena-container">
             <div className="contest-header-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                    <h2 className="arena-title">Custom Contests⚙️🛠️</h2>
+                    <h2 className="arena-title">Custom Contests</h2>
                     <p className="arena-subtitle">Contest problems will be automatically selected which suits you.</p>
                 </div>
                 

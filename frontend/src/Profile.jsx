@@ -292,7 +292,7 @@ function Profile() {
                             <h3 className="link-setup-title">Connected Accounts</h3>
                             <div className="link-setup-list">
                                 <div className="platform-link-block">
-                                    <p className="platform-link-title">Codeforces Identity Mapping</p>
+                                    <p className="platform-link-title">Codeforces Handle</p>
                                     {handles.cf ? (
                                         <div className="active-linked-badge">
                                             <span>✓ Connected: <strong>@{handles.cf}</strong></span>
@@ -301,12 +301,12 @@ function Profile() {
                                     ) : (
                                         <form onSubmit={(e) => handleLinkPlatform(e, 'cf', cfInput)} className="input-row">
                                             <input type="text" placeholder="CF Username" value={cfInput} onChange={(e) => setCfInput(e.target.value)} className="full-input" />
-                                            <button type="submit" className="btn-primary">Link Stream</button>
+                                            <button type="submit" className="btn-primary">Link </button>
                                         </form>
                                     )}
                                 </div>
                                 <div className="platform-link-block">
-                                    <p className="platform-link-title">LeetCode Identity Mapping</p>
+                                    <p className="platform-link-title">LeetCode Username</p>
                                     {handles.lt ? (
                                         <div className="active-linked-badge badge-lt">
                                             <span>✓ Connected: <strong>@{handles.lt}</strong></span>
@@ -315,7 +315,7 @@ function Profile() {
                                     ) : (
                                         <form onSubmit={(e) => handleLinkPlatform(e, 'lt', ltInput)} className="input-row">
                                             <input type="text" placeholder="LeetCode Username" value={ltInput} onChange={(e) => setLtInput(e.target.value)} className="full-input" />
-                                            <button type="submit" className="btn-primary btn-lt">Link Stream</button>
+                                            <button type="submit" className="btn-primary btn-lt">Link </button>
                                         </form>
                                     )}
                                 </div>
@@ -333,7 +333,7 @@ function Profile() {
                     <div className="auth-focus-box">
 
                         <h2 className="auth-title">AlgoStats</h2>
-                        <p className="auth-subtitle">Unified Competitive Programming Engineering Portal</p>
+                        <p className="auth-subtitle">Unified Competitive Programming Portal</p>
                         <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => setError('Google Identity Verification Failed.')} />
                         {error && <div className="error-message">{error}</div>}
                     </div>
@@ -435,7 +435,7 @@ function Profile() {
                     </nav>
 
                     <main className="dashboard-container">
-                        {loading && <div className="loading-indicator">Processing network stream transaction synchronization...</div>}
+                        {loading && <div className="loading-indicator">Loading...</div>}
                         {renderMainWorkspace()}
                     </main>
                 </>
