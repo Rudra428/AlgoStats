@@ -8,6 +8,20 @@ AlgoStats-Arena is a full-stack algorithmic intelligence engine designed to brea
 
 ---
 
+
+
+## 🎯 Problem & Solution
+
+### The Problem 📉
+With thousands of algorithmic problems spread across fragmented platforms like Codeforces and LeetCode, developers face intense **decision fatigue**. It is incredibly difficult for a user to self-diagnose their exact skill gaps, leading them to either waste time solving trivial problems below their tier or get frustrated by hitting roadblocks on problems far beyond their current capabilities.
+
+### Our Solution: The Arena Engine 🚀
+AlgoStats-Arena eliminates decision fatigue by operating as an automated algorithmic coach. 
+
+Instead of forcing users to choose, the platform utilizes a custom synthesis algorithm that reads live profile data, parses cross-platform historical performance, and maps out user capabilities. It then dynamically curates an optimized batch of unsolved problems and packages them into a time-bounded **Custom Contest**. This guarantees that every training session targets the exact sweet spot of the user's current engineering threshold, accelerating skill acquisition through structured, adaptive learning.
+
+---
+
 ## ✨ Core Features & Uniqueness
 
 Unlike standard profile aggregators, AlgoStats-Arena acts as an **engineering intelligence layer** that actively drives developer growth:
