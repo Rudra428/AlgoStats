@@ -229,11 +229,9 @@ function Contest({ userSession }) {
                                 <li><strong>LeetCode:</strong> There is some confideltial socring system. It will be revealed soon! .</li>
                             </ul>
                             
-                            <h4 style={{ margin: '0 0 8px 0', color: '#0f172a' }}>Expected Rating Math</h4>
+                            <h4 style={{ margin: '0 0 8px 0', color: '#0f172a' }}>Rating Calculation</h4>
                             <ul style={{ paddingLeft: '20px', margin: '0 0 12px 0' }}>
-                                <li>Anchored by your <strong>Highest Solved Rating</strong>.</li>
-                                <li>Formula: <code>Rating = Highest + ((Yield% - 0.5) * 400)</code></li>
-                                <li>Retain &gt;50% of total points to increase performance rating.</li>
+                                <li>Will be revealed soon</li>
                             </ul>
 
                             <h4 style={{ margin: '0 0 8px 0', color: '#0f172a' }}>Timers</h4>
