@@ -16,13 +16,21 @@ function Live({ config, problems: initialProblems, userSession, onEndContest }) 
             return;
         }
 
-        // 1. BULLETPROOF DATE PARSING
+        // 1. BULLETPROOF DATE PARSING (Fixed for +5:30 Shift)
         let startTimeMs;
-        // If it's the raw "YYYY-MM-DD HH:MM:SS" format from contest creation
-        if (typeof config.start_time === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(config.start_time)) {
-            startTimeMs = new Date(config.start_time.replace(' ', 'T')).getTime();
+        
+        if (typeof config.start_time === 'string') {
+            if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(config.start_time)) {
+                // Case A: Freshly created contest ("YYYY-MM-DD HH:MM:SS")
+                // Convert space to 'T' and explicitly append IST offset
+                startTimeMs = new Date(config.start_time.replace(' ', 'T') + '+05:30').getTime();
+            } else {
+                // Case B: Resumed contest from History API ("Sat, 30 May 2026 09:33:06 GMT")
+                // Flask mistakenly labels the naive DB time as GMT. We correct it to IST (+0530).
+                const correctedString = config.start_time.replace('GMT', '+0530');
+                startTimeMs = new Date(correctedString).getTime();
+            }
         } else {
-            // If it's the standard format from the history API ("Sat, 30 May...")
             startTimeMs = new Date(config.start_time).getTime();
         }
 
